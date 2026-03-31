@@ -3,6 +3,9 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+// Import middleware
+const auth = require("../middleware/authMiddleware");
+const role = require("../middleware/roleMiddleware");
 
 const SECRET = "mysecretkey";
 
@@ -66,6 +69,30 @@ router.post("/login", async (req, res) => {
         res.json({ token, role: user.role });
 
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ===============================
+// 👤 CREATE USER (ADMIN / SUPERADMIN)
+// ===============================
+router.post("/create-user", auth, role("admin", "superadmin"), async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+
+        const user = new User({
+            name,
+            email,
+            password,
+            role
+        });
+
+        await user.save();
+
+        res.json({ message: "User created successfully" });
+
+    } catch (err) {
+        console.log("CREATE USER ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });
