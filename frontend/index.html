@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inventory System</title>
+</head>
+<body>
+
+<h2>Add Product</h2>
+
+<input id="name" placeholder="Product Name"><br><br>
+<input id="category" placeholder="Category"><br><br>
+<input id="price" placeholder="Price"><br><br>
+<input id="quantity" placeholder="Quantity"><br><br>
+
+<button onclick="addProduct()">Add Product</button>
+
+<h2>Products</h2>
+<ul id="productList"></ul>
+
+<script>
+
+async function addProduct() {
+    try {
+        const product = {
+            name: document.getElementById("name").value,
+            category: document.getElementById("category").value,
+            price: Number(document.getElementById("price").value),
+            quantity: Number(document.getElementById("quantity").value)
+        };
+
+        const res = await fetch("http://localhost:5000/api/products/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(product)
+        });
+
+        const data = await res.json();
+        console.log("Added:", data);
+
+        getProducts();
+
+    } catch (err) {
+        console.error("Add Error:", err);
+    }
+}
+
+async function getProducts() {
+    try {
+        const res = await fetch("http://localhost:5000/api/products");
+        const data = await res.json();
+
+        const list = document.getElementById("productList");
+        list.innerHTML = "";
+
+        data.forEach(p => {
+            const li = document.createElement("li");
+            li.textContent = `${p.name} - ${p.quantity}`;
+            list.appendChild(li);
+        });
+
+    } catch (err) {
+        console.error("Fetch Error:", err);
+    }
+}
+
+// Load products on page load
+getProducts();
+
+</script>
+
+</body>
+</html>

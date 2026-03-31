@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inventory Dashboard</title>
+
+    <!-- Tailwind CSS (UI Styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js (Charts) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="flex">
+
+    <!-- Sidebar -->
+    <div class="w-64 bg-blue-900 text-white min-h-screen p-5">
+        <h2 class="text-2xl font-bold mb-8">Inventory System</h2>
+
+        <p class="mb-4">Dashboard</p>
+
+        <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded">
+            Logout
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6">
+
+        <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+
+        <!-- Add Product -->
+        <div class="bg-white p-5 rounded shadow mb-6">
+            <h2 class="text-xl font-bold mb-4">Add Product</h2>
+
+            <div class="grid grid-cols-2 gap-4">
+                <input id="name" class="border p-2 rounded" placeholder="Product Name">
+                <input id="category" class="border p-2 rounded" placeholder="Category">
+                <input id="price" class="border p-2 rounded" placeholder="Price">
+                <input id="quantity" class="border p-2 rounded" placeholder="Quantity">
+            </div>
+
+            <button id="addBtn" onclick="addProduct()" 
+                class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
+                Add Product
+            </button>
+        </div>
+
+        <!-- Product Table -->
+        <div class="bg-white p-5 rounded shadow mb-6">
+            <h2 class="text-xl font-bold mb-4">Products</h2>
+
+            <table class="w-full border">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-2">Name</th>
+                        <th class="p-2">Category</th>
+                        <th class="p-2">Price</th>
+                        <th class="p-2">Qty</th>
+                        <th class="p-2">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody id="productList"></tbody>
+            </table>
+        </div>
+
+        <!-- Chart -->
+        <div class="bg-white p-5 rounded shadow">
+            <h2 class="text-xl font-bold mb-4">Stock Analytics</h2>
+            <canvas id="stockChart"></canvas>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+// ===================== AUTH =====================
+
+const token = localStorage.getItem("token");
+const role = localStorage.getItem("role");
+
+if (!token) {
+    window.location.href = "login.html";
+}
+
+// Hide add button for non-admins
+if (role !== "admin" && role !== "superadmin") {
+    document.getElementById("addBtn").style.display = "none";
+}
+
+// ===================== AUTO LOGOUT =====================
+
+let timeout;
+
+function resetTimer() {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        alert("Session expired");
+        logout();
+    }, 60000); // 1 minute
+}
+
+document.onload = resetTimer;
+document.onmousemove = resetTimer;
+document.onkeypress = resetTimer;
+
+// ===================== ADD PRODUCT =====================
+
+async function addProduct() {
+    try {
+        const res = await fetch("http://localhost:5000/api/products/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": token
+            },
+            body: JSON.stringify({
+                name: document.getElementById("name").value,
+                category: document.getElementById("category").value,
+                price: Number(document.getElementById("price").value),
+                quantity: Number(document.getElementById("quantity").value)
+            })
+        });
+
+        const data = await res.json();
+        console.log("ADD RESPONSE:", data);
+
+        getProducts();
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// ===================== GET PRODUCTS =====================
+
+async function getProducts() {
+    const res = await fetch("http://localhost:5000/api/products", {
+        headers: { "Authorization": token }
+    });
+
+    const data = await res.json();
+
+    const list = document.getElementById("productList");
+    list.innerHTML = "";
+
+    data.forEach(p => {
+
+        const lowStock = p.quantity < 10 ? "bg-red-200" : "";
+
+        list.innerHTML += `
+        <tr class="${lowStock}">
+            <td class="border p-2">${p.name}</td>
+            <td class="border p-2">${p.category}</td>
+            <td class="border p-2">${p.price}</td>
+            <td class="border p-2">${p.quantity}</td>
+            <td class="border p-2">
+
+                <button onclick="editProduct('${p._id}', '${p.name}', ${p.quantity})"
+                    class="bg-yellow-500 text-white px-2 py-1 rounded mr-2">
+                    Edit
+                </button>
+
+                <button onclick="deleteProduct('${p._id}')"
+                    class="bg-red-500 text-white px-2 py-1 rounded">
+                    Delete
+                </button>
+
+            </td>
+        </tr>
+        `;
+    });
+
+    renderChart(data);
+}
+
+// ===================== DELETE =====================
+
+async function deleteProduct(id) {
+    await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": token }
+    });
+
+    getProducts();
+}
+
+// ===================== EDIT =====================
+
+async function editProduct(id, name, currentQty) {
+    const newQty = prompt(`Update quantity for ${name} (Current: ${currentQty})`);
+
+    if (!newQty || isNaN(newQty)) {
+        alert("Invalid input");
+        return;
+    }
+
+    await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token
+        },
+        body: JSON.stringify({
+            quantity: Number(newQty)
+        })
+    });
+
+    getProducts();
+}
+
+// ===================== CHART =====================
+
+function renderChart(data) {
+
+    const ctx = document.getElementById("stockChart");
+
+    const names = data.map(p => p.name);
+    const quantities = data.map(p => p.quantity);
+
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: names,
+            datasets: [{
+                label: "Stock Levels",
+                data: quantities
+            }]
+        }
+    });
+}
+
+// ===================== LOGOUT =====================
+
+function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+}
+
+getProducts();
+
+</script>
+
+</body>
+</html>
