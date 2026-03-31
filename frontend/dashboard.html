@@ -19,10 +19,14 @@
         <h2 class="text-2xl font-bold mb-8">Inventory System</h2>
 
         <p class="mb-4">Dashboard</p>
-
+        //View Logs button only for superadmin
+        <button onclick="openLogs()" class="bg-green-600 px-3 py-1 rounded mt-4">
+            View Logs
+        </button>
         <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded">
             Logout
         </button>
+
     </div>
 
     <!-- Main Content -->
@@ -106,6 +110,16 @@ function resetTimer() {
 document.onload = resetTimer;
 document.onmousemove = resetTimer;
 document.onkeypress = resetTimer;
+
+// Function to open logs page
+function openLogs() {
+    if (role === "superadmin") {
+        window.location.href = "logs.html";
+    } else {
+        alert("Access denied");
+    }
+}
+
 
 // ===================== ADD PRODUCT =====================
 

@@ -1,15 +1,25 @@
+// ===============================
+// AUTH ROUTES (CLEAN VERSION)
+// ===============================
+
 const express = require("express");
 const router = express.Router();
+
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
 const User = require("../models/user");
-// Import middleware
+
+// Middleware
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
 
 const SECRET = "mysecretkey";
 
-// ✅ REGISTER
+
+// ===============================
+// 📝 REGISTER
+// ===============================
 router.post("/register", async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
@@ -32,22 +42,10 @@ router.post("/register", async (req, res) => {
     }
 });
 
-// Admin to create Users
-router.post("/create-user", auth, role("admin"), async (req, res) => {
-    const { name, email, password, role } = req.body;
 
-    const user = new User({
-        name,
-        email,
-        password,
-        role
-    });
-
-    await user.save();
-    res.json({ message: "User created" });
-});
-
-// ✅ LOGIN
+// ===============================
+// 🔐 LOGIN
+// ===============================
 router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -73,6 +71,7 @@ router.post("/login", async (req, res) => {
     }
 });
 
+
 // ===============================
 // 👤 CREATE USER (ADMIN / SUPERADMIN)
 // ===============================
@@ -80,10 +79,13 @@ router.post("/create-user", auth, role("admin", "superadmin"), async (req, res) 
     try {
         const { name, email, password, role } = req.body;
 
+        // 🔒 HASH PASSWORD (IMPORTANT)
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = new User({
             name,
             email,
-            password,
+            password: hashedPassword,
             role
         });
 
@@ -97,4 +99,6 @@ router.post("/create-user", auth, role("admin", "superadmin"), async (req, res) 
     }
 });
 
+
+// ===============================
 module.exports = router;

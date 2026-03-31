@@ -1,13 +1,15 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
+const logRoutes = require("./routes/logRoutes");
 // ✅ CREATE APP FIRST
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use("/api/logs", logRoutes);
+
 
 // ✅ IMPORT ROUTES AFTER app is created
 const productRoutes = require("./routes/productroutes");
