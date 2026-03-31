@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Super Admin Panel</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="flex">
+
+    <!-- SIDEBAR -->
+    <div class="w-64 bg-black text-white min-h-screen p-5">
+        <h2 class="text-2xl font-bold mb-6">👑 Super Admin</h2>
+
+        <button onclick="loadUsers()" class="block mb-3 bg-blue-600 px-3 py-2 rounded w-full">
+            👤 Users
+        </button>
+
+        <button onclick="loadLogs()" class="block mb-3 bg-green-600 px-3 py-2 rounded w-full">
+            🕵️ Logs
+        </button>
+
+        <button onclick="logout()" class="bg-red-600 px-3 py-2 rounded w-full">
+            🚪 Logout
+        </button>
+    </div>
+
+    <!-- MAIN -->
+    <div class="flex-1 p-6">
+
+        <h1 class="text-3xl font-bold mb-6">Super Admin Dashboard</h1>
+
+        <!-- CREATE USER -->
+        <div class="bg-white p-5 rounded shadow mb-6">
+            <h2 class="text-xl font-bold mb-4">Create User</h2>
+
+            <input id="name" placeholder="Name" class="border p-2 w-full mb-2">
+            <input id="email" placeholder="Email" class="border p-2 w-full mb-2">
+            <input id="password" placeholder="Password" class="border p-2 w-full mb-2">
+
+            <select id="role" class="border p-2 w-full mb-2">
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+                <option value="superadmin">Super Admin</option>
+            </select>
+
+            <button onclick="createUser()" class="bg-blue-600 text-white px-4 py-2 rounded">
+                ➕ Create User
+            </button>
+        </div>
+
+        <!-- USERS TABLE -->
+        <div class="bg-white p-5 rounded shadow mb-6">
+            <h2 class="text-xl font-bold mb-4">Users</h2>
+
+            <table class="w-full border">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-2">Name</th>
+                        <th class="p-2">Email</th>
+                        <th class="p-2">Role</th>
+                    </tr>
+                </thead>
+
+                <tbody id="userList"></tbody>
+            </table>
+        </div>
+
+        <!-- LOGS -->
+        <div class="bg-white p-5 rounded shadow">
+            <h2 class="text-xl font-bold mb-4">Activity Logs</h2>
+
+            <ul id="logList"></ul>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+// ================== AUTH CHECK ==================
+const token = localStorage.getItem("token");
+const role = localStorage.getItem("role");
+
+// ONLY SUPER ADMIN CAN ACCESS
+if (role !== "superadmin") {
+    alert("Access denied");
+    window.location.href = "dashboard.html";
+}
+
+// ================== CREATE USER ==================
+async function createUser() {
+
+    const res = await fetch("http://localhost:5000/api/auth/create-user", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token
+        },
+        body: JSON.stringify({
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            role: document.getElementById("role").value
+        })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    loadUsers();
+}
+
+
+// ================== LOAD USERS ==================
+async function loadUsers() {
+
+    const res = await fetch("http://localhost:5000/api/auth/users", {
+        headers: { "Authorization": token }
+    });
+
+    const users = await res.json();
+
+    const list = document.getElementById("userList");
+    list.innerHTML = "";
+
+    users.forEach(u => {
+        list.innerHTML += `
+        <tr>
+            <td class="border p-2">${u.name}</td>
+            <td class="border p-2">${u.email}</td>
+            <td class="border p-2">${u.role}</td>
+        </tr>
+        `;
+    });
+}
+
+
+// ================== LOAD LOGS ==================
+async function loadLogs() {
+
+    const res = await fetch("http://localhost:5000/api/logs", {
+        headers: { "Authorization": token }
+    });
+
+    const logs = await res.json();
+
+    const list = document.getElementById("logList");
+    list.innerHTML = "";
+
+    logs.forEach(l => {
+        list.innerHTML += `<li class="border-b p-2">
+            ${l.user} - ${l.action} - ${new Date(l.time).toLocaleString()}
+        </li>`;
+    });
+}
+
+
+// ================== LOGOUT ==================
+function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+}
+
+// Load users on page open
+loadUsers();
+
+</script>
+
+</body>
+</html>

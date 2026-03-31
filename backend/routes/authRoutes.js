@@ -99,6 +99,11 @@ router.post("/create-user", auth, role("admin", "superadmin"), async (req, res) 
     }
 });
 
+// Temporary test route 
+router.get("/test", (req, res) => {
+    res.send("Auth route working");
+});
+
 
 // ===============================
 module.exports = router;

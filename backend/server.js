@@ -1,3 +1,4 @@
+console.log("AUTH ROUTES LOADED"); // ADD DEBUG
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
