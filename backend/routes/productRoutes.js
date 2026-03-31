@@ -3,6 +3,12 @@ const router = express.Router();
 const Product = require("../models/product");
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
+const Log = require("../models/Log");
+
+await Log.create({
+    user: req.user.id,
+    action: `Added product ${name}`
+});
 
 // ✅ Add product (Admin only)
 router.post("/add", auth, role("admin"), async (req, res) => {

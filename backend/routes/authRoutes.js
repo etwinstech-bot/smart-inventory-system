@@ -29,6 +29,21 @@ router.post("/register", async (req, res) => {
     }
 });
 
+// Admin to create Users
+router.post("/create-user", auth, role("admin"), async (req, res) => {
+    const { name, email, password, role } = req.body;
+
+    const user = new User({
+        name,
+        email,
+        password,
+        role
+    });
+
+    await user.save();
+    res.json({ message: "User created" });
+});
+
 // ✅ LOGIN
 router.post("/login", async (req, res) => {
     try {
