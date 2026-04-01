@@ -1,103 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Super Admin Panel</title>
+<meta charset="UTF-8">
+<title>Super Admin Panel</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body {
+    background: #f4f6f9;
+}
+
+.card {
+    border-radius: 12px;
+}
+</style>
+
 </head>
 
-<body class="bg-gray-100">
+<body>
 
-<div class="flex">
+<div class="container mt-5">
 
-    <!-- SIDEBAR -->
-    <div class="w-64 bg-black text-white min-h-screen p-5">
-        <h2 class="text-2xl font-bold mb-6">👑 Super Admin</h2>
+<h1 class="text-center mb-4">👑 Super Admin Panel</h1>
 
-        <button onclick="loadUsers()" class="block mb-3 bg-blue-600 px-3 py-2 rounded w-full">
-            👤 Users
-        </button>
+<!-- 🔐 PROTECT PAGE -->
+<script>
+const token = localStorage.getItem("token");
 
-        <button onclick="loadLogs()" class="block mb-3 bg-green-600 px-3 py-2 rounded w-full">
-            🕵️ Logs
-        </button>
+if (!token) {
+    alert("Login required");
+    window.location.href = "index.html";
+}
+</script>
 
-        <button onclick="logout()" class="bg-red-600 px-3 py-2 rounded w-full">
-            🚪 Logout
-        </button>
+<!-- CREATE USER -->
+<div class="card shadow p-4">
+
+<h3>➕ Create Account</h3>
+
+<div class="row">
+    <div class="col-md-3">
+        <input id="name" class="form-control" placeholder="Name">
     </div>
 
-    <!-- MAIN -->
-    <div class="flex-1 p-6">
-
-        <h1 class="text-3xl font-bold mb-6">Super Admin Dashboard</h1>
-
-        <!-- CREATE USER -->
-        <div class="bg-white p-5 rounded shadow mb-6">
-            <h2 class="text-xl font-bold mb-4">Create User</h2>
-
-            <input id="name" placeholder="Name" class="border p-2 w-full mb-2">
-            <input id="email" placeholder="Email" class="border p-2 w-full mb-2">
-            <input id="password" placeholder="Password" class="border p-2 w-full mb-2">
-
-            <select id="role" class="border p-2 w-full mb-2">
-                <option value="staff">Staff</option>
-                <option value="admin">Admin</option>
-                <option value="superadmin">Super Admin</option>
-            </select>
-
-            <button onclick="createUser()" class="bg-blue-600 text-white px-4 py-2 rounded">
-                ➕ Create User
-            </button>
-        </div>
-
-        <!-- USERS TABLE -->
-        <div class="bg-white p-5 rounded shadow mb-6">
-            <h2 class="text-xl font-bold mb-4">Users</h2>
-
-            <table class="w-full border">
-                <thead>
-                    <tr class="bg-gray-200">
-                        <th class="p-2">Name</th>
-                        <th class="p-2">Email</th>
-                        <th class="p-2">Role</th>
-                    </tr>
-                </thead>
-
-                <tbody id="userList"></tbody>
-            </table>
-        </div>
-
-        <!-- LOGS -->
-        <div class="bg-white p-5 rounded shadow">
-            <h2 class="text-xl font-bold mb-4">Activity Logs</h2>
-
-            <ul id="logList"></ul>
-        </div>
-
+    <div class="col-md-3">
+        <input id="email" class="form-control" placeholder="Email">
     </div>
+
+    <div class="col-md-3">
+        <input id="password" type="password" class="form-control" placeholder="Password">
+    </div>
+
+    <div class="col-md-2">
+        <select id="role" class="form-control">
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+        </select>
+    </div>
+
+    <div class="col-md-1">
+        <button class="btn btn-success w-100" onclick="createUser()">Create</button>
+    </div>
+</div>
+
+<br>
+
+<button class="btn btn-danger" onclick="logout()">🚪 Logout</button>
+
+</div>
+
 </div>
 
 <script>
 
-// ================== AUTH CHECK ==================
-const token = localStorage.getItem("token");
-const role = localStorage.getItem("role");
-
-// ONLY SUPER ADMIN CAN ACCESS
-if (role !== "superadmin") {
-    alert("Access denied");
-    window.location.href = "dashboard.html";
-}
-
-// ================== CREATE USER ==================
+// CREATE USER
 async function createUser() {
 
     const res = await fetch("http://localhost:5000/api/auth/create-user", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": token
+            "Authorization": "Bearer " + token
         },
         body: JSON.stringify({
             name: document.getElementById("name").value,
@@ -108,64 +92,31 @@ async function createUser() {
     });
 
     const data = await res.json();
-    alert(data.message);
 
-    loadUsers();
+    alert(data.message || data.error);
 }
 
-
-// ================== LOAD USERS ==================
-async function loadUsers() {
-
-    const res = await fetch("http://localhost:5000/api/auth/users", {
-        headers: { "Authorization": token }
-    });
-
-    const users = await res.json();
-
-    const list = document.getElementById("userList");
-    list.innerHTML = "";
-
-    users.forEach(u => {
-        list.innerHTML += `
-        <tr>
-            <td class="border p-2">${u.name}</td>
-            <td class="border p-2">${u.email}</td>
-            <td class="border p-2">${u.role}</td>
-        </tr>
-        `;
-    });
-}
-
-
-// ================== LOAD LOGS ==================
-async function loadLogs() {
-
-    const res = await fetch("http://localhost:5000/api/logs", {
-        headers: { "Authorization": token }
-    });
-
-    const logs = await res.json();
-
-    const list = document.getElementById("logList");
-    list.innerHTML = "";
-
-    logs.forEach(l => {
-        list.innerHTML += `<li class="border-b p-2">
-            ${l.user} - ${l.action} - ${new Date(l.time).toLocaleString()}
-        </li>`;
-    });
-}
-
-
-// ================== LOGOUT ==================
+// LOGOUT
 function logout() {
     localStorage.clear();
-    window.location.href = "login.html";
+    window.location.href = "index.html";
 }
 
-// Load users on page open
-loadUsers();
+// AUTO LOGOUT
+let timer;
+
+function resetTimer() {
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+        alert("Logged out due to inactivity");
+        logout();
+    }, 60000);
+}
+
+document.addEventListener("DOMContentLoaded", resetTimer);
+document.onmousemove = resetTimer;
+document.onkeypress = resetTimer;
 
 </script>
 

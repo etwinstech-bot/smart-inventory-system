@@ -1,3 +1,7 @@
+// ===============================
+// 🔐 AUTH MIDDLEWARE
+// ===============================
+
 const jwt = require("jsonwebtoken");
 
 const SECRET = "mysecretkey";
@@ -10,10 +14,10 @@ module.exports = function (req, res, next) {
     }
 
     try {
-        const verified = jwt.verify(token, SECRET);
-        req.user = verified;
+        const decoded = jwt.verify(token, SECRET);
+        req.user = decoded;
         next();
     } catch (err) {
-        res.status(400).json({ message: "Invalid token" });
+        res.status(401).json({ message: "Invalid token" });
     }
 };

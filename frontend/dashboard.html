@@ -1,260 +1,263 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Inventory Dashboard</title>
+<meta charset="UTF-8">
+<title>Inventory Dashboard</title>
 
-    <!-- Tailwind CSS (UI Styling) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Chart.js (Charts) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    background: #f4f6f9;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.low-stock {
+    color: red;
+    font-weight: bold;
+}
+
+.ok-stock {
+    color: green;
+    font-weight: bold;
+}
+
+</style>
 </head>
 
-<body class="bg-gray-100">
+<body>
 
-<div class="flex">
+<div class="container mt-4">
 
-    <!-- Sidebar -->
-    <div class="w-64 bg-blue-900 text-white min-h-screen p-5">
-        <h2 class="text-2xl font-bold mb-8">Inventory System</h2>
+<h1 class="text-center mb-4">📦 Inventory Dashboard</h1>
 
-        <p class="mb-4">Dashboard</p>
-        <!-- View Logs button only for superadmin -->
-        <button onclick="openLogs()" class="bg-green-600 px-3 py-1 rounded mt-4">
-            View Logs
-        </button>
-        <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded">
-            Logout
-        </button>
+<!-- 🔐 AUTH CHECK -->
+<script>
+const token = localStorage.getItem("token");
 
+if (!token) {
+    alert("Please login first");
+    window.location.href = "index.html";
+}
+</script>
+
+<!-- ➕ ADD PRODUCT -->
+<div class="card shadow p-3 mb-4">
+
+<h4>➕ Add Product</h4>
+
+<div class="row">
+    <div class="col-md-3">
+        <input id="name" class="form-control" placeholder="Product Name">
     </div>
-
-    <!-- Main Content -->
-    <div class="flex-1 p-6">
-
-        <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
-
-        <!-- Add Product -->
-        <div class="bg-white p-5 rounded shadow mb-6">
-            <h2 class="text-xl font-bold mb-4">Add Product</h2>
-
-            <div class="grid grid-cols-2 gap-4">
-                <input id="name" class="border p-2 rounded" placeholder="Product Name">
-                <input id="category" class="border p-2 rounded" placeholder="Category">
-                <input id="price" class="border p-2 rounded" placeholder="Price">
-                <input id="quantity" class="border p-2 rounded" placeholder="Quantity">
-            </div>
-
-            <button id="addBtn" onclick="addProduct()" 
-                class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
-                Add Product
-            </button>
-        </div>
-
-        <!-- Product Table -->
-        <div class="bg-white p-5 rounded shadow mb-6">
-            <h2 class="text-xl font-bold mb-4">Products</h2>
-
-            <table class="w-full border">
-                <thead>
-                    <tr class="bg-gray-200">
-                        <th class="p-2">Name</th>
-                        <th class="p-2">Category</th>
-                        <th class="p-2">Price</th>
-                        <th class="p-2">Qty</th>
-                        <th class="p-2">Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody id="productList"></tbody>
-            </table>
-        </div>
-
-        <!-- Chart -->
-        <div class="bg-white p-5 rounded shadow">
-            <h2 class="text-xl font-bold mb-4">Stock Analytics</h2>
-            <canvas id="stockChart"></canvas>
-        </div>
-
+    <div class="col-md-3">
+        <input id="category" class="form-control" placeholder="Category">
     </div>
+    <div class="col-md-2">
+        <input id="price" type="number" class="form-control" placeholder="Price">
+    </div>
+    <div class="col-md-2">
+        <input id="quantity" type="number" class="form-control" placeholder="Quantity">
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-success w-100" onclick="addProduct()">Add</button>
+    </div>
+</div>
+
+</div>
+
+<!-- 📋 PRODUCT TABLE -->
+<div class="card shadow p-3 mb-4">
+
+<h4>📋 Product List</h4>
+
+<div class="table-responsive">
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody id="productTable"></tbody>
+
+</table>
+</div>
+
+</div>
+
+<!-- 📊 CHART -->
+<div class="card shadow p-3">
+
+<h4>📊 Stock Chart</h4>
+<canvas id="chart"></canvas>
+
+</div>
+
 </div>
 
 <script>
 
-// ===================== AUTH =====================
+// 📦 LOAD PRODUCTS
+let myChart;
 
-const token = localStorage.getItem("token");
-const role = localStorage.getItem("role");
+async function loadProducts() {
 
-if (!token) {
-    window.location.href = "login.html";
-}
-
-// Hide add button for non-admins
-if (role !== "admin" && role !== "superadmin") {
-    document.getElementById("addBtn").style.display = "none";
-}
-
-// ===================== AUTO LOGOUT =====================
-
-let timeout;
-
-function resetTimer() {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-        alert("Session expired");
-        logout();
-    }, 60000); // 1 minute
-}
-
-document.onload = resetTimer;
-document.onmousemove = resetTimer;
-document.onkeypress = resetTimer;
-
-// Function to open logs page
-function openLogs() {
-    if (role === "superadmin") {
-        window.location.href = "logs.html";
-    } else {
-        alert("Access denied");
-    }
-}
-
-
-// ===================== ADD PRODUCT =====================
-
-async function addProduct() {
-    try {
-        const res = await fetch("http://localhost:5000/api/products/add", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": token
-            },
-            body: JSON.stringify({
-                name: document.getElementById("name").value,
-                category: document.getElementById("category").value,
-                price: Number(document.getElementById("price").value),
-                quantity: Number(document.getElementById("quantity").value)
-            })
-        });
-
-        const data = await res.json();
-        console.log("ADD RESPONSE:", data);
-
-        getProducts();
-
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-// ===================== GET PRODUCTS =====================
-
-async function getProducts() {
     const res = await fetch("http://localhost:5000/api/products", {
-        headers: { "Authorization": token }
+        headers: { "Authorization": "Bearer " + token }
     });
 
-    const data = await res.json();
+    const products = await res.json();
 
-    const list = document.getElementById("productList");
-    list.innerHTML = "";
+    const table = document.getElementById("productTable");
+    table.innerHTML = "";
 
-    data.forEach(p => {
+    products.forEach(p => {
 
-        const lowStock = p.quantity < 10 ? "bg-red-200" : "";
+        let status = p.quantity <= 5
+            ? `<span class="low-stock">LOW STOCK ⚠️</span>`
+            : `<span class="ok-stock">OK</span>`;
 
-        list.innerHTML += `
-        <tr class="${lowStock}">
-            <td class="border p-2">${p.name}</td>
-            <td class="border p-2">${p.category}</td>
-            <td class="border p-2">${p.price}</td>
-            <td class="border p-2">${p.quantity}</td>
-            <td class="border p-2">
-
-                <button onclick="editProduct('${p._id}', '${p.name}', ${p.quantity})"
-                    class="bg-yellow-500 text-white px-2 py-1 rounded mr-2">
-                    Edit
-                </button>
-
-                <button onclick="deleteProduct('${p._id}')"
-                    class="bg-red-500 text-white px-2 py-1 rounded">
-                    Delete
-                </button>
-
+        table.innerHTML += `
+        <tr>
+            <td>${p.name}</td>
+            <td>${p.category || "-"}</td>
+            <td>${p.price || 0}</td>
+            <td>${p.quantity}</td>
+            <td>${status}</td>
+            <td>
+                <button class="btn btn-sm btn-warning" onclick="editProduct('${p._id}', '${p.name}')">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p._id}')">Delete</button>
             </td>
         </tr>
         `;
     });
 
-    renderChart(data);
+    loadChart(products);
 }
 
-// ===================== DELETE =====================
 
-async function deleteProduct(id) {
-    await fetch(`http://localhost:5000/api/products/${id}`, {
-        method: "DELETE",
-        headers: { "Authorization": token }
+// ➕ ADD PRODUCT
+async function addProduct() {
+
+    const name = document.getElementById("name").value;
+    const category = document.getElementById("category").value;
+    const price = document.getElementById("price").value;
+    const quantity = document.getElementById("quantity").value;
+
+    const res = await fetch("http://localhost:5000/api/products/add", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ name, category, price, quantity })
     });
 
-    getProducts();
+    const data = await res.json();
+
+    alert(data.message || "Product added");
+
+    loadProducts();
 }
 
-// ===================== EDIT =====================
 
-async function editProduct(id, name, currentQty) {
-    const newQty = prompt(`Update quantity for ${name} (Current: ${currentQty})`);
+// ✏️ EDIT PRODUCT
+async function editProduct(id, name) {
 
-    if (!newQty || isNaN(newQty)) {
-        alert("Invalid input");
-        return;
-    }
+    const quantity = prompt(`Enter new quantity for ${name}`);
 
-    await fetch(`http://localhost:5000/api/products/${id}`, {
+    if (!quantity) return;
+
+    const res = await fetch(`http://localhost:5000/api/products/update/${id}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": token
+            "Authorization": "Bearer " + token
         },
-        body: JSON.stringify({
-            quantity: Number(newQty)
-        })
+        body: JSON.stringify({ quantity })
     });
 
-    getProducts();
+    const data = await res.json();
+
+    alert(data.message || "Updated");
+
+    loadProducts();
 }
 
-// ===================== CHART =====================
 
-function renderChart(data) {
+// 🗑 DELETE PRODUCT
+async function deleteProduct(id) {
 
-    const ctx = document.getElementById("stockChart");
+    if (!confirm("Are you sure you want to delete this product?")) return;
 
-    const names = data.map(p => p.name);
-    const quantities = data.map(p => p.quantity);
+    const res = await fetch(`http://localhost:5000/api/products/delete/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": "Bearer " + token }
+    });
 
-    new Chart(ctx, {
+    const data = await res.json();
+
+    alert(data.message || "Deleted");
+
+    loadProducts();
+}
+
+
+// 📊 CHART
+function loadChart(products) {
+
+    const names = products.map(p => p.name);
+    const qty = products.map(p => p.quantity);
+
+    if (myChart) myChart.destroy(); // prevent duplication
+
+    const ctx = document.getElementById("chart").getContext("2d");
+
+    myChart = new Chart(ctx, {
         type: "bar",
         data: {
             labels: names,
             datasets: [{
                 label: "Stock Levels",
-                data: quantities
+                data: qty
             }]
         }
     });
 }
 
-// ===================== LOGOUT =====================
 
-function logout() {
-    localStorage.clear();
-    window.location.href = "login.html";
+// 🔐 AUTO LOGOUT (1 min)
+let timer;
+
+function resetTimer() {
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+        alert("Logged out due to inactivity");
+        localStorage.clear();
+        window.location.href = "index.html";
+    }, 60000);
 }
 
-getProducts();
+document.addEventListener("DOMContentLoaded", () => {
+    loadProducts();
+    resetTimer();
+});
+
+document.onmousemove = resetTimer;
+document.onkeypress = resetTimer;
 
 </script>
 
