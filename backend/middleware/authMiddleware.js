@@ -7,10 +7,15 @@ const jwt = require("jsonwebtoken");
 const SECRET = "mysecretkey";
 
 module.exports = function (req, res, next) {
-    const token = req.header("Authorization");
+    let token = req.header("Authorization");
 
     if (!token) {
         return res.status(401).json({ message: "No token, access denied" });
+    }
+
+    // ✅ REMOVE "Bearer "
+    if (token.startsWith("Bearer ")) {
+        token = token.slice(7).trim();
     }
 
     try {
@@ -18,6 +23,7 @@ module.exports = function (req, res, next) {
         req.user = decoded;
         next();
     } catch (err) {
-        res.status(401).json({ message: "Invalid token" });
+        console.log("❌ TOKEN ERROR:", err.message);
+        return res.status(401).json({ message: "Invalid token" });
     }
 };

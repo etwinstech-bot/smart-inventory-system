@@ -23,14 +23,6 @@ app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 
 // MongoDB Connection
-mongoose.connect("mongodb://127.0.0.1:27017/inventoryDB")
-.then(() => {
-    console.log("✅ MongoDB Connected Successfully");
-})
-.catch((err) => {
-    console.log("❌ MongoDB Connection Error:", err);
-});
-
 mongoose.connection.on("connected", () => {
     console.log("🔥 Mongoose connected to DB");
 });

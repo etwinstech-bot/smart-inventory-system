@@ -92,6 +92,15 @@ router.post("/create-user", auth, role("admin", "superadmin"), async (req, res) 
     try {
         const { name, email, password, role } = req.body;
 
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: "Name, email and password are required" });
+        }
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "Email already in use" });
+        }
+
         // 🔒 ALWAYS HASH PASSWORD
         const hashedPassword = await bcrypt.hash(password, 10);
 
