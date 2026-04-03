@@ -36,6 +36,7 @@ body {
 <div class="container mt-4">
 
 <h1 class="text-center mb-4">📦 Inventory Dashboard</h1>
+<div id="lowStockAlert"></div>
 
 <!-- 🔐 AUTH CHECK -->
 <script>
@@ -122,10 +123,13 @@ async function loadProducts() {
 
     const table = document.getElementById("productTable");
     table.innerHTML = "";
+    let lowStockCount = 0;
 
     products.forEach(p => {
+        const isLowStock = p.quantity < 10;
+        if (isLowStock) lowStockCount++;
 
-        let status = p.quantity <= 5
+        let status = isLowStock
             ? `<span class="low-stock">LOW STOCK ⚠️</span>`
             : `<span class="ok-stock">OK</span>`;
 
@@ -143,6 +147,13 @@ async function loadProducts() {
         </tr>
         `;
     });
+
+    const alertEl = document.getElementById("lowStockAlert");
+    if (lowStockCount > 0) {
+        alertEl.innerHTML = `<div class="alert alert-warning">⚠️ ${lowStockCount} product(s) have fewer than 10 items. Please restock soon.</div>`;
+    } else {
+        alertEl.innerHTML = "";
+    }
 
     loadChart(products);
 }

@@ -2,9 +2,9 @@
   "name": "inventory-system-backend",
   "version": "1.0.0",
   "description": "Inventory system backend",
-  "main": "server.js",
+  "main": "backend/server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node backend/server.js"
   },
   "author": "Edwin",
   "license": "ISC",

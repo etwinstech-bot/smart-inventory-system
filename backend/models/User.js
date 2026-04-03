@@ -22,6 +22,23 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["superadmin", "admin", "staff", "user"],
     default: "user"
+  },
+  status: {
+    type: String,
+    enum: ["active", "inactive", "suspended"],
+    default: "active"
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  },
+  lastLogin: {
+    type: Date,
+    default: null
   }
 });
 

@@ -66,6 +66,10 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ message: "Wrong password" });
         }
 
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
+
         // Generate token
         const token = jwt.sign(
             { id: user._id, role: user.role },
@@ -96,6 +100,21 @@ router.post("/create-user", auth, role("admin", "superadmin"), async (req, res) 
             return res.status(400).json({ message: "Name, email and password are required" });
         }
 
+        const requestedRole = role || "staff";
+        const userRole = req.user.role;
+
+        if (userRole === "admin") {
+            if (!["staff", "user"].includes(requestedRole)) {
+                return res.status(403).json({ message: "Admin can only create staff or user accounts" });
+            }
+        }
+
+        if (userRole === "superadmin") {
+            if (!["superadmin", "admin", "staff", "user"].includes(requestedRole)) {
+                return res.status(400).json({ message: "Invalid role" });
+            }
+        }
+
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Email already in use" });
@@ -108,7 +127,7 @@ router.post("/create-user", auth, role("admin", "superadmin"), async (req, res) 
             name,
             email,
             password: hashedPassword,
-            role
+            role: requestedRole
         });
 
         await user.save();
