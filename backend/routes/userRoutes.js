@@ -130,4 +130,67 @@ router.get("/stats/overview", verifyToken, allowRoles("superadmin"), async (req,
     }
 });
 
+// GET CURRENT USER PROFILE
+router.get("/me", verifyToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select("-password");
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// UPDATE CURRENT USER PROFILE
+router.put("/me", verifyToken, async (req, res) => {
+    try {
+        const { name, email } = req.body;
+        const user = await User.findById(req.user.id);
+        
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // Check if email is already taken
+        if (email && email !== user.email) {
+            const existing = await User.findOne({ email });
+            if (existing) return res.status(400).json({ error: "Email already in use" });
+        }
+
+        if (name) user.name = name;
+        if (email) user.email = email;
+        user.updatedAt = new Date();
+
+        await user.save();
+        res.json({ message: "Profile updated successfully", user: { name: user.name, email: user.email, role: user.role } });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// CHANGE CURRENT USER PASSWORD
+router.put("/me/password", verifyToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ error: "New password must be at least 6 characters" });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // Verify current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) return res.status(400).json({ error: "Current password is incorrect" });
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        user.updatedAt = new Date();
+        await user.save();
+
+        res.json({ message: "Password updated successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

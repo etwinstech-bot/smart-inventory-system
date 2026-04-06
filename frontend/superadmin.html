@@ -20,8 +20,8 @@
         .roleadmin { background-color: #bfdbfe; color: #1e40af; }
         .rolestaff { background-color: #d1d5db; color: #1f2937; }
         .roleuser { background-color: #e0e7ff; color: #3730a3; }
-        .modal { display: none; z-index: 1000; }
-        .modal.active { display: flex; }
+        .modal { display: none !important; z-index: 1000; }
+        .modal.active { display: flex !important; }
         .animate-slideIn { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .loader { border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
@@ -214,13 +214,20 @@
             <!-- 📦 PRODUCTS -->
             <div id="products" class="hidden space-y-6">
                 <div class="bg-white rounded-xl shadow p-6 border border-gray-200">
-                    <h2 class="text-xl font-bold mb-4">Products Inventory</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Products Inventory</h2>
+                        <button onclick="openCreateProductModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition font-semibold">
+                            <i class="fas fa-plus mr-2"></i> New Product
+                        </button>
+                    </div>
                     <table class="w-full">
                         <thead>
                             <tr class="bg-gray-100 border border-gray-200">
                                 <th class="px-4 py-2 text-left">Name</th>
-                                <th class="px-4 py-2">Quantity</th>
-                                <th class="px-4 py-2">Actions</th>
+                                <th class="px-4 py-2 text-left">Category</th>
+                                <th class="px-4 py-2 text-right">Price</th>
+                                <th class="px-4 py-2 text-center">Quantity</th>
+                                <th class="px-4 py-2 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="productList" class="divide-y divide-gray-200"></tbody>
@@ -250,7 +257,7 @@
 </div>
 
 <!-- ✏️ CREATE/EDIT USER MODAL -->
-<div id="userModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+<div id="userModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideIn">
         <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-4 flex justify-between items-center">
             <h3 id="modalTitle" class="text-xl font-bold">Create New User</h3>
@@ -261,7 +268,9 @@
         <div class="p-6 space-y-4">
             <input id="userModalName" type="text" placeholder="Full Name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             <input id="userModalEmail" type="email" placeholder="Email Address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <input id="userModalPassword" type="password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div id="passwordFieldWrapper">
+                <input id="userModalPassword" type="password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
             
             <select id="userModalRole" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="user">User</option>
@@ -287,7 +296,7 @@
 </div>
 
 <!-- 🗑️ DELETE CONFIRMATION MODAL -->
-<div id="deleteModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+<div id="deleteModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm animate-slideIn">
         <div class="bg-red-50 px-6 py-6 text-center">
             <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-3"></i>
@@ -302,7 +311,7 @@
 </div>
 
 <!-- 🔄 ROLE/STATUS MODAL -->
-<div id="changeModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+<div id="changeModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideIn">
         <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-4 flex justify-between items-center">
             <h3 id="changeModalTitle" class="text-xl font-bold">Change User Role</h3>
@@ -334,6 +343,43 @@
         <div class="bg-gray-50 px-6 py-4 flex gap-3 justify-end border-t border-gray-200">
             <button onclick="closeChangeModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition font-medium">Cancel</button>
             <button onclick="confirmChange()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition font-medium">Update</button>
+        </div>
+    </div>
+</div>
+
+<!-- 📦 CREATE/EDIT PRODUCT MODAL -->
+<div id="productModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slideIn">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 flex justify-between items-center">
+            <h3 id="productModalTitle" class="text-xl font-bold">Create New Product</h3>
+            <button onclick="closeProductModal()" class="text-white hover:bg-green-700 p-1 rounded transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <input id="productModalName" type="text" placeholder="Product Name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <input id="productModalCategory" type="text" placeholder="Category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <input id="productModalPrice" type="number" placeholder="Price" min="0" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <input id="productModalQuantity" type="number" placeholder="Quantity" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex gap-3 justify-end border-t border-gray-200">
+            <button onclick="closeProductModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition font-medium">Cancel</button>
+            <button id="productModalSaveBtn" onclick="saveProduct()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-medium">Create Product</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🗑️ DELETE PRODUCT CONFIRMATION MODAL -->
+<div id="deleteProductModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm animate-slideIn">
+        <div class="bg-red-50 px-6 py-6 text-center">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-3"></i>
+            <h3 class="text-xl font-bold text-red-700">Delete Product</h3>
+            <p id="deleteProductMessage" class="text-gray-600 mt-2">Are you sure you want to delete this product?</p>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex gap-3 justify-end border-t border-gray-200">
+            <button onclick="closeDeleteProductModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition font-medium">Cancel</button>
+            <button onclick="confirmDeleteProduct()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium">Delete</button>
         </div>
     </div>
 </div>
@@ -405,6 +451,73 @@ async function loadStats() {
     }
 }
 
+// 📊 RENDER ROLE DISTRIBUTION CHART
+function renderRoleChart() {
+    const superadminCount = allUsers.filter(u => u.role === 'superadmin').length;
+    const adminCount = allUsers.filter(u => u.role === 'admin').length;
+    const staffCount = allUsers.filter(u => u.role === 'staff').length;
+    const userCount = allUsers.filter(u => u.role === 'user').length;
+
+    const ctx = document.getElementById('roleChart');
+    if (!ctx) return;
+
+    // Destroy existing chart if it exists
+    if (window.roleChartInstance) {
+        window.roleChartInstance.destroy();
+    }
+
+    window.roleChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Super Admin', 'Admin', 'Staff', 'User'],
+            datasets: [{
+                data: [superadminCount, adminCount, staffCount, userCount],
+                backgroundColor: [
+                    '#fecaca',
+                    '#bfdbfe',
+                    '#d1d5db',
+                    '#e0e7ff'
+                ],
+                borderColor: [
+                    '#7f1d1d',
+                    '#1e40af',
+                    '#1f2937',
+                    '#3730a3'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: { size: 12, weight: '500' }
+                    }
+                }
+            }
+        }
+    });
+
+    // Update quick info stats
+    document.getElementById('inactiveCount').textContent = allUsers.filter(u => u.status === 'inactive').length;
+    
+    const last24H = allUsers.filter(u => {
+        if (!u.lastLogin) return false;
+        const lastLogin = new Date(u.lastLogin);
+        const now = new Date();
+        const diffMs = now - lastLogin;
+        return diffMs < 24 * 60 * 60 * 1000;
+    }).length;
+    document.getElementById('last24hLogins').textContent = last24H;
+    
+    const avgDay = Math.ceil(allUsers.length / Math.max(1, new Set(allUsers.map(u => new Date(u.createdAt).toLocaleDateString())).size));
+    document.getElementById('avgUsersDay').textContent = avgDay;
+}
+
 // 👥 LOAD USERS
 async function loadUsers() {
     try {
@@ -423,8 +536,6 @@ async function loadUsers() {
         alert("Error loading users: " + err.message);
     }
 }
-
-// 🔍 FILTER USERS
 function filterAndDisplayUsers() {
     const searchTerm = document.getElementById("searchInput").value.toLowerCase();
     const roleFilter = document.getElementById("roleFilter").value;
@@ -507,6 +618,36 @@ function displayUsers(users) {
     `).join("");
 }
 
+// ✏️ OPEN EDIT USER MODAL
+async function openEditUserModal(userId) {
+    try {
+        currentEditingUserId = userId;
+        const res = await fetch(`${API_BASE}/users/${userId}`, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        
+        if (!res.ok) throw new Error("Failed to fetch user");
+        
+        const user = await res.json();
+
+        document.getElementById("modalTitle").textContent = "Edit User";
+        document.getElementById("modalSaveBtn").textContent = "Update User";
+        document.getElementById("userModalName").value = user.name || "";
+        document.getElementById("userModalEmail").value = user.email || "";
+        document.getElementById("userModalPassword").value = "";
+        document.getElementById("userModalRole").value = user.role || "user";
+        document.getElementById("userModalStatus").value = user.status || "active";
+        
+        // Hide password field for edit mode
+        document.getElementById("passwordFieldWrapper").classList.add("hidden");
+        
+        document.getElementById("userModal").classList.add("active");
+    } catch (err) {
+        console.error("Error in openEditUserModal:", err);
+        alert("Error loading user: " + err.message);
+    }
+}
+
 // ✏️ OPEN CREATE USER MODAL
 function openCreateUserModal() {
     currentEditingUserId = null;
@@ -517,41 +658,22 @@ function openCreateUserModal() {
     document.getElementById("userModalPassword").value = "";
     document.getElementById("userModalRole").value = "user";
     document.getElementById("userModalStatus").value = "active";
-    document.getElementById("userModalPassword").parentElement.classList.remove("hidden");
+    
+    // Show password field for create mode
+    document.getElementById("passwordFieldWrapper").classList.remove("hidden");
+    
     document.getElementById("userModal").classList.add("active");
-}
-
-// ✏️ OPEN EDIT USER MODAL
-async function openEditUserModal(userId) {
-    try {
-        currentEditingUserId = userId;
-        const res = await fetch(`${API_BASE}/users/${userId}`, {
-            headers: { "Authorization": "Bearer " + token }
-        });
-        const user = await res.json();
-
-        document.getElementById("modalTitle").textContent = "Edit User";
-        document.getElementById("modalSaveBtn").textContent = "Update User";
-        document.getElementById("userModalName").value = user.name;
-        document.getElementById("userModalEmail").value = user.email;
-        document.getElementById("userModalPassword").value = "";
-        document.getElementById("userModalRole").value = user.role;
-        document.getElementById("userModalStatus").value = user.status;
-        document.getElementById("userModalPassword").parentElement.classList.add("hidden");
-        document.getElementById("userModal").classList.add("active");
-    } catch (err) {
-        alert("Error loading user: " + err.message);
-    }
 }
 
 // 💾 SAVE USER
 async function saveUser() {
-    const name = document.getElementById("userModalName").value;
-    const email = document.getElementById("userModalEmail").value;
+    const name = document.getElementById("userModalName").value.trim();
+    const email = document.getElementById("userModalEmail").value.trim();
     const password = document.getElementById("userModalPassword").value;
     const role = document.getElementById("userModalRole").value;
     const status = document.getElementById("userModalStatus").value;
 
+    // Validation
     if (!name || !email) {
         alert("Name and email are required");
         return;
@@ -564,7 +686,7 @@ async function saveUser() {
 
     try {
         if (currentEditingUserId) {
-            // UPDATE USER
+            // UPDATE EXISTING USER
             const res = await fetch(`${API_BASE}/users/${currentEditingUserId}`, {
                 method: "PUT",
                 headers: {
@@ -574,10 +696,14 @@ async function saveUser() {
                 body: JSON.stringify({ name, email, status })
             });
 
-            if (!res.ok) throw new Error("Failed to update user");
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Failed to update user");
+            }
 
+            // Update password if provided
             if (password) {
-                await fetch(`${API_BASE}/users/${currentEditingUserId}/password`, {
+                const pwRes = await fetch(`${API_BASE}/users/${currentEditingUserId}/password`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -585,6 +711,11 @@ async function saveUser() {
                     },
                     body: JSON.stringify({ password })
                 });
+
+                if (!pwRes.ok) {
+                    const errorData = await pwRes.json();
+                    throw new Error(errorData.message || "Failed to update password");
+                }
             }
 
             alert("User updated successfully");
@@ -599,13 +730,18 @@ async function saveUser() {
                 body: JSON.stringify({ name, email, password, role })
             });
 
-            if (!res.ok) throw new Error("Failed to create user");
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Failed to create user");
+            }
+
             alert("User created successfully");
         }
 
         closeUserModal();
         loadUsers();
     } catch (err) {
+        console.error("Error in saveUser:", err);
         alert("Error: " + err.message);
     }
 }
@@ -714,9 +850,18 @@ async function loadProducts() {
         list.innerHTML = products.map(p => `
             <tr class="hover:bg-gray-50">
                 <td class="px-4 py-2">${p.name}</td>
+                <td class="px-4 py-2">${p.category || '-'}</td>
+                <td class="px-4 py-2 text-right">$${parseFloat(p.price || 0).toFixed(2)}</td>
                 <td class="px-4 py-2 text-center">${p.quantity}</td>
                 <td class="px-4 py-2 text-center">
-                    <button onclick="deleteProduct('${p._id}')" class="text-red-500 hover:text-red-700">Delete</button>
+                    <div class="flex justify-center gap-2">
+                        <button onclick="openEditProductModal('${p._id}', '${p.name}', '${p.category || ''}', ${p.price || 0}, ${p.quantity})" class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition" title="Edit product">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="openDeleteProductModal('${p._id}', '${p.name}')" class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition" title="Delete product">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join("");
@@ -740,6 +885,133 @@ async function deleteProduct(id) {
     }
 }
 
+let currentEditingProductId = null;
+let currentDeletingProductId = null;
+
+// 📦 OPEN CREATE PRODUCT MODAL
+function openCreateProductModal() {
+    currentEditingProductId = null;
+    document.getElementById("productModalTitle").textContent = "Create New Product";
+    document.getElementById("productModalSaveBtn").textContent = "Create Product";
+    document.getElementById("productModalName").value = "";
+    document.getElementById("productModalCategory").value = "";
+    document.getElementById("productModalPrice").value = "";
+    document.getElementById("productModalQuantity").value = "";
+    document.getElementById("productModal").classList.add("active");
+}
+
+// ✏️ OPEN EDIT PRODUCT MODAL
+function openEditProductModal(productId, name, category, price, quantity) {
+    currentEditingProductId = productId;
+    document.getElementById("productModalTitle").textContent = "Edit Product";
+    document.getElementById("productModalSaveBtn").textContent = "Update Product";
+    document.getElementById("productModalName").value = name;
+    document.getElementById("productModalCategory").value = category || "";
+    document.getElementById("productModalPrice").value = price || "";
+    document.getElementById("productModalQuantity").value = quantity;
+    document.getElementById("productModal").classList.add("active");
+}
+
+// 💾 SAVE PRODUCT
+async function saveProduct() {
+    const name = document.getElementById("productModalName").value.trim();
+    const category = document.getElementById("productModalCategory").value.trim();
+    const price = parseFloat(document.getElementById("productModalPrice").value);
+    const quantity = parseInt(document.getElementById("productModalQuantity").value);
+
+    if (!name) {
+        alert("Product name is required");
+        return;
+    }
+
+    if (isNaN(price) || price < 0) {
+        alert("Price must be a valid number");
+        return;
+    }
+
+    if (isNaN(quantity) || quantity < 0) {
+        alert("Quantity must be a valid number");
+        return;
+    }
+
+    try {
+        if (currentEditingProductId) {
+            // UPDATE PRODUCT
+            const res = await fetch(`${API_BASE}/products/${currentEditingProductId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({ name, category, price, quantity })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Failed to update product");
+            }
+
+            alert("Product updated successfully");
+        } else {
+            // CREATE NEW PRODUCT
+            const res = await fetch(`${API_BASE}/products/add`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({ name, category, price, quantity })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Failed to create product");
+            }
+
+            alert("Product created successfully");
+        }
+
+        closeProductModal();
+        loadProducts();
+    } catch (err) {
+        console.error("Error in saveProduct:", err);
+        alert("Error: " + err.message);
+    }
+}
+
+// 🗑️ OPEN DELETE PRODUCT MODAL
+function openDeleteProductModal(productId, productName) {
+    currentDeletingProductId = productId;
+    document.getElementById("deleteProductMessage").textContent = `Are you sure you want to delete "${productName}"? This action cannot be undone.`;
+    document.getElementById("deleteProductModal").classList.add("active");
+}
+
+// ✓ CONFIRM DELETE PRODUCT
+async function confirmDeleteProduct() {
+    try {
+        const res = await fetch(`${API_BASE}/products/${currentDeletingProductId}`, {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || "Failed to delete product");
+        }
+
+        alert("Product deleted successfully");
+        closeDeleteProductModal();
+        loadProducts();
+    } catch (err) {
+        console.error("Error in confirmDeleteProduct:", err);
+        alert("Error: " + err.message);
+    }
+}
+
+// CLOSE PRODUCT MODALS
+function closeProductModal() { document.getElementById("productModal").classList.remove("active"); }
+function closeDeleteProductModal() { document.getElementById("deleteProductModal").classList.remove("active"); }
+
 // 🕵️ LOAD LOGS
 async function loadLogs() {
     try {
@@ -750,7 +1022,7 @@ async function loadLogs() {
         const list = document.getElementById("logList");
         list.innerHTML = logs.map(log => `
             <tr class="hover:bg-gray-50">
-                <td class="px-4 py-2">${log.user}</td>
+                <td class="px-4 py-2">${log.userName || log.user || 'Unknown'}</td>
                 <td class="px-4 py-2">${log.action}</td>
                 <td class="px-4 py-2">${new Date(log.time).toLocaleString()}</td>
             </tr>
@@ -796,215 +1068,6 @@ setInterval(() => {
     }
     localStorage.setItem("lastActive", now.toString());
 }, 5000);
-</script>
-
-</body>
-</html>
-
-    if (!nameInput.value || !emailInput.value || !passwordInput.value) {
-        alert("Name, email, and password are required.");
-        return;
-    }
-
-    const res = await fetch("http://localhost:5000/api/auth/create-user", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-        },
-        body: JSON.stringify({
-            name: nameInput.value,
-            email: emailInput.value,
-            password: passwordInput.value,
-            role: roleInput.value
-        })
-    });
-
-    const data = await res.json();
-    alert(data.message || data.error);
-}
-// 📦 LOAD PRODUCTS
-async function loadProducts() {
-    const res = await fetch("http://localhost:5000/api/products", {
-        headers: { "Authorization": "Bearer " + token }
-    });
-
-    const products = await res.json();
-    const list = document.getElementById("productList");
-    list.innerHTML = "";
-
-    products.forEach(p => {
-        list.innerHTML += `
-        <tr>
-            <td>${p.name}</td>
-            <td>${p.quantity}</td>
-            <td>
-                <button onclick="deleteProduct('${p._id}')">Delete</button>
-            </td>
-        </tr>`;
-    });
-}
-
-// 🗑 DELETE PRODUCT
-async function deleteProduct(id) {
-    await fetch(`http://localhost:5000/api/products/delete/${id}`, {
-        method: "DELETE",
-        headers: { "Authorization": "Bearer " + token }
-    });
-
-    loadProducts();
-}
-
-// 🕵️ LOAD LOGS
-async function loadLogs() {
-    const res = await fetch("http://localhost:5000/api/logs", {
-        headers: { "Authorization": "Bearer " + token }
-    });
-
-    const logs = await res.json();
-    const list = document.getElementById("logList");
-
-    list.innerHTML = "";
-
-    logs.forEach(log => {
-        list.innerHTML += `
-        <tr>
-            <td>${log.user}</td>
-            <td>${log.action}</td>
-            <td>${new Date(log.time).toLocaleString()}</td>
-        </tr>`;
-    });
-}
-
-// 🚪 LOGOUT
-function logout() {
-    if (confirm("Are you sure you want to logout?")) {
-        localStorage.clear();
-        window.location.href = "index.html";
-    }
-}
-
-// 📤 EXPORT USERS AS CSV
-function exportUsersCSV() {
-    if (allUsers.length === 0) {
-        alert("No users to export");
-        return;
-    }
-
-    let csv = "Name,Email,Role,Status,Last Login,Joined\n";
-    allUsers.forEach(user => {
-        csv += `"${user.name}","${user.email}","${user.role}","${user.status}","${user.lastLogin || 'N/A'}","${new Date(user.createdAt).toLocaleDateString()}"\n`;
-    });
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-}
-
-// MODAL CLOSE FUNCTIONS
-function closeUserModal() { document.getElementById("userModal").classList.remove("active"); }
-function closeDeleteModal() { document.getElementById("deleteModal").classList.remove("active"); }
-function closeChangeModal() { document.getElementById("changeModal").classList.remove("active"); }
-
-// 📊 RENDER ROLE DISTRIBUTION CHART
-function renderRoleChart() {
-    const superadminCount = allUsers.filter(u => u.role === 'superadmin').length;
-    const adminCount = allUsers.filter(u => u.role === 'admin').length;
-    const staffCount = allUsers.filter(u => u.role === 'staff').length;
-    const userCount = allUsers.filter(u => u.role === 'user').length;
-
-    const ctx = document.getElementById('roleChart');
-    if (!ctx) return;
-
-    // Destroy existing chart if it exists
-    if (window.roleChartInstance) {
-        window.roleChartInstance.destroy();
-    }
-
-    window.roleChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Super Admin', 'Admin', 'Staff', 'User'],
-            datasets: [{
-                data: [superadminCount, adminCount, staffCount, userCount],
-                backgroundColor: [
-                    '#fecaca',
-                    '#bfdbfe',
-                    '#d1d5db',
-                    '#e0e7ff'
-                ],
-                borderColor: [
-                    '#7f1d1d',
-                    '#1e40af',
-                    '#1f2937',
-                    '#3730a3'
-                ],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 20,
-                        font: { size: 12, weight: '500' }
-                    }
-                }
-            }
-        }
-    });
-
-    // Update quick info stats
-    document.getElementById('inactiveCount').textContent = allUsers.filter(u => u.status === 'inactive').length;
-    
-    const last24H = allUsers.filter(u => {
-        if (!u.lastLogin) return false;
-        const lastLogin = new Date(u.lastLogin);
-        const now = new Date();
-        const diffMs = now - lastLogin;
-        return diffMs < 24 * 60 * 60 * 1000;
-    }).length;
-    document.getElementById('last24hLogins').textContent = last24H;
-    
-    const avgDay = Math.ceil(allUsers.length / Math.max(1, new Set(allUsers.map(u => new Date(u.createdAt).toLocaleDateString())).size));
-    document.getElementById('avgUsersDay').textContent = avgDay;
-}
-
-// 🔍 SEARCH & FILTER EVENT LISTENERS
-document.getElementById("searchInput").addEventListener("input", filterAndDisplayUsers);
-document.getElementById("roleFilter").addEventListener("change", filterAndDisplayUsers);
-document.getElementById("statusFilter").addEventListener("change", filterAndDisplayUsers);
-
-// INITIALIZE
-loadUsers();
-loadStats();
-if (localStorage.getItem("darkMode") === "true") {
-    toggleDarkMode();
-}
-
-// Update last activity periodically
-setInterval(() => {
-    const lastActive = localStorage.getItem("lastActive");
-    const now = Date.now();
-    if (lastActive) {
-        const diffMinutes = Math.floor((now - parseInt(lastActive)) / 60000);
-        if (diffMinutes < 1) {
-            document.getElementById("lastActivity").textContent = "now";
-        } else if (diffMinutes < 60) {
-            document.getElementById("lastActivity").textContent = `${diffMinutes}m ago`;
-        } else {
-            document.getElementById("lastActivity").textContent = `${Math.floor(diffMinutes / 60)}h ago`;
-        }
-    }
-    localStorage.setItem("lastActive", now.toString());
-}, 5000);
-
 </script>
 
 </body>

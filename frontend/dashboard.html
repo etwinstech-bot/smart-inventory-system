@@ -6,6 +6,7 @@
 
 <!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -28,14 +29,82 @@ body {
     font-weight: bold;
 }
 
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    position: relative;
+}
+
+.avatar-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 180px;
+    z-index: 1000;
+    display: none;
+}
+
+.avatar-dropdown.show {
+    display: block;
+}
+
+.avatar-dropdown .dropdown-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.avatar-dropdown .dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.avatar-dropdown .dropdown-item:hover {
+    background: #f8f9fa;
+}
+
+.header {
+    position: relative;
+    padding: 20px;
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
+<div class="header">
+    <h1 class="mb-0">📦 Inventory Dashboard</h1>
+    <div class="avatar" id="userAvatar" onclick="toggleAvatarMenu()">
+        <span id="userInitials">U</span>
+    </div>
+    <div class="avatar-dropdown" id="avatarMenu">
+        <div class="dropdown-item" onclick="openEditProfileModal()">Edit Account</div>
+        <div class="dropdown-item text-danger" onclick="logout()">Logout</div>
+    </div>
+</div>
+
 <div class="container mt-4">
 
-<h1 class="text-center mb-4">📦 Inventory Dashboard</h1>
 <div id="lowStockAlert"></div>
 
 <!-- 🔐 AUTH CHECK -->
@@ -108,7 +177,209 @@ if (!token) {
 
 </div>
 
+<!-- EDIT PROFILE MODAL -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="editName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword">
+                        <small class="text-muted">Required to change password</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword">
+                        <small class="text-muted">Leave blank to keep current password</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+
+// USER INFO
+let currentUser = null;
+
+// LOAD USER INFO
+async function loadUserInfo() {
+    try {
+        const res = await fetch("http://localhost:5000/api/users/me", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        
+        if (res.ok) {
+            currentUser = await res.json();
+            const initials = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            document.getElementById("userInitials").textContent = initials;
+            return true;
+        }
+
+        if (res.status === 401) {
+            localStorage.clear();
+            window.location.href = "index.html";
+            return false;
+        }
+
+        const error = await res.json();
+        console.error("Failed to load user info:", error);
+        return false;
+    } catch (err) {
+        console.error("Failed to load user info:", err);
+        return false;
+    }
+}
+
+// TOGGLE AVATAR MENU
+function toggleAvatarMenu() {
+    const menu = document.getElementById("avatarMenu");
+    menu.classList.toggle("show");
+}
+
+// CLOSE MENU WHEN CLICKING OUTSIDE
+document.addEventListener("click", (e) => {
+    const avatar = document.getElementById("userAvatar");
+    const menu = document.getElementById("avatarMenu");
+    if (!avatar.contains(e.target)) {
+        menu.classList.remove("show");
+    }
+});
+
+// OPEN EDIT PROFILE MODAL
+async function openEditProfileModal() {
+    if (!currentUser) {
+        const loaded = await loadUserInfo();
+        if (!loaded) {
+            alert("Unable to load your account information yet. Please refresh the page or try again shortly.");
+            return;
+        }
+    }
+
+    document.getElementById("editName").value = currentUser.name;
+    document.getElementById("editEmail").value = currentUser.email;
+    document.getElementById("currentPassword").value = "";
+    document.getElementById("newPassword").value = "";
+
+    const modalElement = document.getElementById("editProfileModal");
+    if (!modalElement) {
+        alert("Modal not found");
+        return;
+    }
+
+    try {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } catch (error) {
+        console.error("Error showing modal:", error);
+        // Fallback: manually show modal
+        modalElement.classList.add('show');
+        modalElement.style.display = 'block';
+        document.body.classList.add('modal-open');
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        document.body.appendChild(backdrop);
+    }
+
+    // Hide avatar menu
+    document.getElementById("avatarMenu").classList.remove("show");
+}
+
+// SAVE PROFILE
+async function saveProfile() {
+    const name = document.getElementById("editName").value.trim();
+    const email = document.getElementById("editEmail").value.trim();
+    const currentPassword = document.getElementById("currentPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+    
+    if (!name || !email) {
+        alert("Name and email are required");
+        return;
+    }
+    
+    try {
+        // Update profile
+        const profileRes = await fetch("http://localhost:5000/api/users/me", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({ name, email })
+        });
+        
+        if (!profileRes.ok) {
+            const error = await profileRes.json();
+            alert(error.error || "Failed to update profile");
+            return;
+        }
+        
+        // Update password if provided
+        if (newPassword) {
+            if (!currentPassword) {
+                alert("Current password is required to change password");
+                return;
+            }
+            
+            const passwordRes = await fetch("http://localhost:5000/api/users/me/password", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({ currentPassword, newPassword })
+            });
+            
+            if (!passwordRes.ok) {
+                const error = await passwordRes.json();
+                alert(error.error || "Failed to update password");
+                return;
+            }
+        }
+        
+        alert("Profile updated successfully");
+        try {
+            bootstrap.Modal.getInstance(document.getElementById("editProfileModal")).hide();
+        } catch (error) {
+            // Fallback: manually hide modal
+            const modalElement = document.getElementById("editProfileModal");
+            modalElement.classList.remove('show');
+            modalElement.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+        }
+        loadUserInfo(); // Refresh user info
+        
+    } catch (err) {
+        console.error("Error updating profile:", err);
+        alert("An error occurred while updating profile");
+    }
+}
+
+// LOGOUT
+function logout() {
+    localStorage.clear();
+    window.location.href = "index.html";
+}
 
 // 📦 LOAD PRODUCTS
 let myChart;
@@ -263,6 +534,7 @@ function resetTimer() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    loadUserInfo();
     loadProducts();
     resetTimer();
 });
